@@ -1,6 +1,7 @@
 #include "mip.h"
 
 #include <arpa/inet.h>
+#include <string.h>
 
 uint32_t build_mip_header(
 	uint8_t destination,
@@ -18,7 +19,7 @@ uint32_t build_mip_header(
 	header |= ((uint32_t) (sdu_length & 0x01ff)) <<3;
 	header |= ((uint32_t) (sdu_type & 0x07));
 
-	return htonl(header)
+	return htonl(header);
 }
 
 void parse_mip_header(
@@ -32,6 +33,7 @@ void parse_mip_header(
 	dest_header->source = (header >> 16) & 0xff;
 	dest_header->ttl = (header >> 12) & 0x0f;
 	dest_header->sdu_length = (header >> 3) & 0x01ff;
+	dest_header->sdu_type = header & 0x07;
 }
 
 size_t build_mip_datagram(
@@ -46,9 +48,9 @@ size_t build_mip_datagram(
 	) {
 
 	size_t padded_len = ((sdu_len + 3) / 4) * 4;
-	size_t total_len = 4 + padded_len;
+	size_t total_len = MIP_HEADER_SIZE + padded_len;
 
-	if (buffer_size < total_len):
+	if (buffer_size < total_len)
 		return 0;
 
 	uint16_t sdu_words = padded_len / 4;
@@ -62,9 +64,9 @@ size_t build_mip_datagram(
 
 	memcpy(buffer, &header, sizeof(header));
 
-	memcpy(buffer + 4, sdu, sdu_len);
+	memcpy(buffer + MIP_HEADER_SIZE, sdu, sdu_len);
 
-	memset(buffer + 4 + sdu_len, 0, padded_len - sdu_len);
+	memset(buffer + MIP_HEADER_SIZE + sdu_len, 0, padded_len - sdu_len);
 
-	return total_len
+	return total_len;
 }
